@@ -1,0 +1,129 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+  moduleFormat = "cjs"
+  importFileExtension = ""
+  previewFeatures = ["partialIndexes"]
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id         String     @id @default(cuid())
+  name       String
+  email      String     @unique
+  document   String     @unique
+  accounts   Account[]
+  categories Category[]
+  createdAt  DateTime   @default(now()) @map("created_at")
+  updatedAt  DateTime   @updatedAt @map("updated_at")
+
+  @@map("users")
+}
+
+enum AccountType {
+  CHECKING
+  SAVINGS
+}
+
+enum AccountStatus {
+  ACTIVE
+  BLOCKED
+  CLOSED
+}
+
+model Account {
+  id                String        @id @default(cuid())
+  number            String        @unique
+  branch            String
+  type              AccountType
+  status            AccountStatus @default(ACTIVE)
+  balanceCents      Int           @default(0) @map("balance_cents")
+  userId            String        @map("user_id")
+  user              User          @relation(fields: [userId], references: [id])
+  entries           Transaction[]
+  outgoingTransfers Transfer[]    @relation("TransferSource")
+  incomingTransfers Transfer[]    @relation("TransferTarget")
+  createdAt         DateTime      @default(now()) @map("created_at")
+  updatedAt         DateTime      @updatedAt @map("updated_at")
+
+  @@index([userId])
+  @@index([status])
+  @@map("accounts")
+}
+
+enum TransactionType {
+  DEPOSIT
+  WITHDRAWAL
+  TRANSFER
+}
+
+enum EntryDirection {
+  CREDIT
+  DEBIT
+}
+
+model Transaction {
+  id                String          @id @default(cuid())
+  idempotencyKey    String?         @unique @map("idempotency_key")
+  accountId         String          @map("account_id")
+  account           Account         @relation(fields: [accountId], references: [id])
+  type              TransactionType
+  direction         EntryDirection
+  amountCents       Int             @map("amount_cents")
+  balanceAfterCents Int             @map("balance_after_cents")
+  categoryId        String?         @map("category_id")
+  category          Category?       @relation(fields: [categoryId], references: [id])
+  transferId        String?         @map("transfer_id")
+  transfer          Transfer?       @relation(fields: [transferId], references: [id])
+  description       String?
+  createdAt         DateTime        @default(now()) @map("created_at")
+
+  @@index([accountId, createdAt])
+  @@index([categoryId])
+  @@index([transferId])
+  @@index([createdAt])
+  @@map("transactions")
+}
+
+enum TransferStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REVERSED
+}
+
+model Transfer {
+  id             String         @id @default(cuid())
+  idempotencyKey String         @unique @map("idempotency_key")
+  fromAccountId  String         @map("from_account_id")
+  fromAccount    Account        @relation("TransferSource", fields: [fromAccountId], references: [id])
+  toAccountId    String         @map("to_account_id")
+  toAccount      Account        @relation("TransferTarget", fields: [toAccountId], references: [id])
+  amountCents    Int            @map("amount_cents")
+  status         TransferStatus @default(PENDING)
+  entries        Transaction[]
+  createdAt      DateTime       @default(now()) @map("created_at")
+  updatedAt      DateTime       @updatedAt @map("updated_at")
+
+  @@index([fromAccountId, createdAt])
+  @@index([toAccountId, createdAt])
+  @@index([status])
+  @@map("transfers")
+}
+
+model Category {
+  id           String        @id @default(cuid())
+  name         String
+  userId       String?       @map("user_id")
+  user         User?         @relation(fields: [userId], references: [id])
+  transactions Transaction[]
+  createdAt    DateTime      @default(now()) @map("created_at")
+  updatedAt    DateTime      @updatedAt @map("updated_at")
+
+  @@unique([userId, name])
+  @@unique([name], where: { userId: null }, map: "categories_global_name_key")
+  @@map("categories")
+}

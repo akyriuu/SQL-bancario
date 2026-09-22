@@ -34,6 +34,42 @@ Cinco endpoints, cinco tabelas, duas migrations. O que faz o projeto existir nã
 
 Cada lançamento guarda o saldo resultante da conta naquele momento, então dá para auditar qualquer linha do extrato sem resomar o razão desde a abertura.
 
+
+## Arquitetura e fluxos
+
+1. Arquitetura Geral 
+
+<img width="1642" height="813" alt="arqgeral" src="https://github.com/user-attachments/assets/7f6254b0-f8bd-4303-9091-3c7485a020cd" />
+
+2. Fluxo de depósito e saque
+
+<img width="427" height="922" alt="fluxoSaqueDep" src="https://github.com/user-attachments/assets/2132f17c-48b0-452b-a179-2f710bc6c8bb" />
+
+3. Fluxo de transferência (dois locks em ordem determinística)
+
+<img width="600" height="928" alt="image" src="https://github.com/user-attachments/assets/5733a5fa-e37f-4592-a4ad-3102b5edd33b" />
+
+4. Idempotência como máquina de estados
+
+<img width="667" height="689" alt="image" src="https://github.com/user-attachments/assets/27b2f59d-9d7a-4aab-bc13-6ff296dff191" />
+
+5. Extrato paginado por cursor
+
+<img width="1731" height="397" alt="image" src="https://github.com/user-attachments/assets/ce7aa2b4-952f-4e97-98a8-836e23161f38" />
+
+6. Modelo de dados
+
+<img width="1464" height="398" alt="image" src="https://github.com/user-attachments/assets/2d06fe26-fbe1-47ad-aaf7-63618693adfc" />
+
+7. Ciclo de desenvolvimento Prisma
+
+<img width="1241" height="796" alt="image" src="https://github.com/user-attachments/assets/793173d2-40fd-4cbb-b0f8-af8b35d8a757" />
+
+
+
+
+
+
 ## Rodando
 
 Precisa de Docker e Node.
